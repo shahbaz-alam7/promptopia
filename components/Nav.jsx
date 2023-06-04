@@ -1,51 +1,53 @@
 "use client";
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { signIn, signOut, useSession, getProviders } from "next-auth/react";
 
 const Nav = () => {
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(true);
-  const [providers, setProviders] = useState(null);
-  const [toggleDropDown, setToggleDropDown] = useState(false);
-  useEffect(() => {
-    const setproviders = async () => {
-      const response = await getProviders();
-      console.log("setproviders ~ response:", response);
+  const { data: session } = useSession();
 
-      setProviders(response);
-    };
-    setproviders();
+  const [providers, setProviders] = useState(null);
+  const [toggleDropdown, setToggleDropdown] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const res = await getProviders();
+      setProviders(res);
+    })();
   }, []);
   return (
     <nav className="flex-between w-full mb-16 p-3">
-      <Link href="/" className="flex gap-2">
+      <Link href="/" className="flex gap-2 flex-center">
         <Image
           src="/assets/images/logo.svg"
+          alt="logo"
           width={30}
           height={30}
-          alt="Promptopia Logo"
           className="object-contain"
         />
-        <p className="logo_text">Promotopia</p>
+        <p className="logo_text">Promptopia</p>
       </Link>
-      {/* desktop login  */}
+
+      {/* Desktop Navigation */}
       <div className="sm:flex hidden">
-        {isUserLoggedIn ? (
+        {session?.user ? (
           <div className="flex gap-3 md:gap-5">
             <Link href="/create-prompt" className="black_btn">
               Create Post
             </Link>
-            <button onClick={signOut} className="outline_btn">
+
+            <button type="button" onClick={signOut} className="outline_btn">
               Sign Out
             </button>
+
             <Link href="/profile">
               <Image
-                src="assets/images/logo.svg"
+                src={session?.user.image}
                 width={37}
                 height={37}
                 alt="profile"
-                className="rounder-full"
+                className="rounded-full"
               />
             </Link>
           </div>
@@ -65,29 +67,46 @@ const Nav = () => {
           </>
         )}
       </div>
-      {/* mobile navigation */}
+
+      {/* Mobile Navigation */}
       <div className="sm:hidden flex relative">
-        {isUserLoggedIn ? (
+        {session?.user ? (
           <div className="flex">
             <Image
+              src={session?.user.image}
               width={37}
               height={37}
-              src="assets/images/logo.svg"
-              alt="pic"
               className="rounded-full"
-              onClick={() => {
-                setToggleDropDown((pre) => !pre);
-              }}
+              alt="profile"
+              onClick={() => setToggleDropdown(!toggleDropdown)}
             />
-            {toggleDropDown && (
+
+            {toggleDropdown && (
               <div className="dropdown">
                 <Link
                   href="/profile"
                   className="dropdown_link"
-                  onClick={() => setToggleDropDown(false)}
+                  onClick={() => setToggleDropdown(false)}
                 >
                   My Profile
                 </Link>
+                <Link
+                  href="/create-prompt"
+                  className="dropdown_link"
+                  onClick={() => setToggleDropdown(false)}
+                >
+                  Create Prompt
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setToggleDropdown(false);
+                    signOut();
+                  }}
+                  className="mt-5 w-full black_btn"
+                >
+                  Sign Out
+                </button>
               </div>
             )}
           </div>
